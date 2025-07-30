@@ -188,7 +188,7 @@
 
             if (score % 10 === 0) {
               speed += 0.5;
-              level++;
+              levelUp();
               levelEl.textContent = `Level: ${level}`;
             }
           }
@@ -210,9 +210,24 @@
         }, 600);
       }
 
-      setInterval(() => {
+      let spawnInterval = 1000;
+      let starInterval = setInterval(spawnStar, spawnInterval);
+
+      function spawnStar() {
         if (!isGameOver) createStar();
-      }, 1000);
+      }
+
+      // Update spawn speed on level up
+      function levelUp() {
+        level++;
+        levelEl.textContent = `Level: ${level}`;
+        speed += 1;
+
+        // Increase number of stars by decreasing interval
+        clearInterval(starInterval);
+        spawnInterval = Math.max(200, spawnInterval - 100); // Don't go below 200ms
+        starInterval = setInterval(spawnStar, spawnInterval);
+      }
 
       // Register service worker
       if ("serviceWorker" in navigator) {
