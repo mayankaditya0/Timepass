@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1E90FF" />
+    <meta property="og:title" content="Catch the Star Game" />
+    <meta
+      property="og:description"
+      content="Fun PWA game developed by Mayank Aditya. Catch stars and challenge your score!"
+    />
+    <meta
+      property="og:image"
+      content="https://cdn-icons-png.flaticon.com/512/616/616490.png"
+    />
+    <meta property="og:url" content="https://your-domain.com/index.html" />
+    <meta name="author" content="Mayank Aditya" />
+
+    <!-- Twitter card (optional) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Catch the Star Game" />
+    <meta
+      name="twitter:description"
+      content="Developed by Mayank Aditya. Install and play offline!"
+    />
+    <meta
+      name="twitter:image"
+      content="https://cdn-icons-png.flaticon.com/512/616/616490.png"
+    />
+    <title>Catch the Star</title>
+
+    <!-- Manifest for PWA -->
+    <link
+      rel="manifest"
+      href='data:application/manifest+json,{
+    "name":"Catch the Star",
+    "short_name":"StarGame",
+    "start_url":".",
+    "display":"standalone",
+    "background_color":"#1E90FF",
+    "theme_color":"#1E90FF",
+    "icons":[{
+      "src":"https://cdn-icons-png.flaticon.com/512/616/616490.png",
+      "sizes":"192x192",
+      "type":"image/png"
+    }]
+  }'
+    />
+
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+        font-family: sans-serif;
+        background: linear-gradient(to bottom, #87cefa, #1e90ff);
+      }
+
+      .game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #catcher {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 20px;
+        background: #fff;
+        border-radius: 10px;
+      }
+
+      .star {
+        position: absolute;
+        top: 0;
+        font-size: 32px;
+        line-height: 1;
+      }
+
+      #score,
+      #level {
+        position: absolute;
+        top: 10px;
+        font-size: 18px;
+        color: #fff;
+      }
+
+      #score {
+        left: 10px;
+      }
+      #level {
+        right: 10px;
+      }
+
+      footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 14px;
+        color: white;
+        padding: 5px;
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      footer a {
+        color: #ffd700;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <div id="catcher"></div>
+      <div id="score">Score: 0</div>
+      <div id="level">Level: 1</div>
+      <footer>
+        Game developed by
+        <a href="https://www.linkedin.com/in/mayank-aditya" target="_blank"
+          >Mayank Aditya</a
+        >
+      </footer>
+    </div>
+
+    <script>
+      const container = document.querySelector(".game-container");
+      const catcher = document.getElementById("catcher");
+      const scoreEl = document.getElementById("score");
+      const levelEl = document.getElementById("level");
+
+      let score = 0;
+      let speed = 2;
+      let level = 1;
+      let isGameOver = false;
+
+      const catchSound = new Audio(
+        "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+      );
+      const gameOverSound = new Audio(
+        "https://actions.google.com/sounds/v1/cartoon/concussive_drum_hit.ogg"
+      );
+
+      document.addEventListener("mousemove", (e) => {
+        catcher.style.left = `${e.clientX - catcher.offsetWidth / 2}px`;
+      });
+
+      document.addEventListener("touchmove", (e) => {
+        catcher.style.left = `${
+          e.touches[0].clientX - catcher.offsetWidth / 2
+        }px`;
+      });
+
+      function createStar() {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.innerText = "⭐"; // Use emoji
+        star.style.left = `${Math.random() * (window.innerWidth - 30)}px`;
+        container.appendChild(star);
+
+        let pos = 0;
+
+        const fall = setInterval(() => {
+          if (isGameOver) return clearInterval(fall);
+          pos += speed;
+          star.style.top = `${pos}px`;
+
+          const starRect = star.getBoundingClientRect();
+          const catcherRect = catcher.getBoundingClientRect();
+
+          if (
+            starRect.bottom >= catcherRect.top &&
+            starRect.left < catcherRect.right &&
+            starRect.right > catcherRect.left
+          ) {
+            score++;
+            scoreEl.textContent = `Score: ${score}`;
+            catchSound.play();
+            container.removeChild(star);
+            clearInterval(fall);
+
+            if (score % 10 === 0) {
+              speed += 0.5;
+              level++;
+              levelEl.textContent = `Level: ${level}`;
+            }
+          }
+
+          if (pos > window.innerHeight) {
+            container.removeChild(star);
+            clearInterval(fall);
+            endGame();
+          }
+        }, 20);
+      }
+
+      function endGame() {
+        isGameOver = true;
+        gameOverSound.play();
+        setTimeout(() => {
+          alert(`Game Over! Final Score: ${score}`);
+          location.reload();
+        }, 600);
+      }
+
+      setInterval(() => {
+        if (!isGameOver) createStar();
+      }, 1000);
+
+      // Register service worker
+      if ("serviceWorker" in navigator) {
+        const sw = `
+        self.addEventListener("install", e => {
+          e.waitUntil(
+            caches.open("star-game").then(cache => cache.addAll(["./"]))
+          );
+        });
+
+        self.addEventListener("fetch", e => {
+          e.respondWith(
+            caches.match(e.request).then(res => res || fetch(e.request))
+          );
+        });
+      `;
+        const blob = new Blob([sw], { type: "application/javascript" });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl);
+      }
+    </script>
+  </body>
+</html>
