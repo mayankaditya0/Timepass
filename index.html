@@ -61,18 +61,19 @@
       .game-container {
         position: relative;
         width: 100vw;
-        height: 100vh;
+        height: 91vh;
       }
 
       #catcher {
-        position: absolute;
-        bottom: 10px;
+        position: fixed;
+        bottom: 9vh;
         left: 50%;
         transform: translateX(-50%);
         width: 80px;
         height: 20px;
         background: #fff;
         border-radius: 10px;
+        z-index: 1000;
       }
 
       .star {
@@ -121,7 +122,9 @@
       <div id="level">Level: 1</div>
       <footer>
         Game developed by
-        <a href="https://www.linkedin.com/in/mayank-aditya" target="_blank"
+        <a
+          href="https://www.linkedin.com/in/mayank-aditya-936296131"
+          target="_blank"
           >Mayank Aditya</a
         >
       </footer>
